@@ -1,4 +1,5 @@
 import re
+import collections
 
 def balance(input):
     discs = {}
@@ -23,7 +24,34 @@ def balance(input):
                 discs[child]["parent"] = name
 
     bottom = [name for name in discs if "parent" not in discs[name]][0]
-    return bottom
+
+    def calculate(disc):
+        if "calculated_weight" not in discs[disc]:
+            discs[disc]["calculated_weight"] = discs[disc]["weight"]
+        
+        if "children" in discs[disc]:
+            balances = []
+
+            for child in discs[disc]["children"]:
+                discs[disc]["calculated_weight"] += calculate(child)
+                balances.append(discs[child]["calculated_weight"])
+            
+            most_common = collections.Counter(balances).most_common()
+            if len(most_common) > 1:
+                balanced, unbalanced = most_common
+                unbalanced_disc = [child for child in discs[disc]["children"] if discs[child]["calculated_weight"] == unbalanced[0]][0]
+                discs[unbalanced_disc]["diff"] = balanced[0] - unbalanced[0]
+            
+            return discs[disc]["calculated_weight"]
+        else:
+            return discs[disc]["weight"]
+
+    calculate(bottom)
+    
+    unbalanced_discs = [disc for name, disc in discs.items() if "diff" in disc]
+    first_unbalanced_disc = sorted(unbalanced_discs, key=lambda n: n["calculated_weight"])[0]
+    
+    return first_unbalanced_disc["weight"] + first_unbalanced_disc["diff"]
 
 assert balance("""pbga (66)
 xhth (57)
@@ -37,7 +65,7 @@ tknk (41) -> ugml, padx, fwft
 jptl (61)
 ugml (68) -> gyxo, ebii, jptl
 gyxo (61)
-cntj (57)""") == "tknk" 
+cntj (57)""") == 60 
 print(balance("""bqyqwn (68) -> wscqe, cwxspl, syogw, xnxudsh
 ddswb (34)
 hnkvw (320)
