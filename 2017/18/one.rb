@@ -1,39 +1,39 @@
 def duet(input)
+  lines = input.lines.map do |line|
+    instruction, *vals = line.split
+    [instruction.to_sym, *vals.map! { |val| val.match?(/-?\d+/) ? val.to_i : val.to_sym }]
+  end
   registers = {}
-  lines = input.lines.map { |line| line.split(" ") }
   idx = 0
-  lastPlayed = nil
+  last_played = nil
 
   loop do
-    instruction, register, value = lines[idx]
-    value = value =~ /[[:alpha:]]/ ? registers[value] : value.to_i
-    registers[register] ||= 0
+    instruction, x, y = lines[idx]
+    y = y.is_a?(Integer) ? y : registers[y]
+    registers[x] ||= 0
 
     case instruction
-    when "snd"
-      lastPlayed = registers[register]
-    when "set"
-      registers[register] = value
-    when "add"
-      registers[register] += value
-    when "mul"
-      registers[register] *= value
-    when "mod"
-      registers[register] %= value
-    when "rcv"
-      break if registers[register] != 0      
+    when :snd
+      last_played = registers[x]
+    when :set
+      registers[x] = y
+    when :add
+      registers[x] += y
+    when :mul
+      registers[x] *= y
+    when :mod
+      registers[x] %= y
+    when :rcv
+      break if registers[x] != 0
+    when :jgz
+      idx += y - 1 if registers[x] != 0
     end
-    
-    if instruction == "jgz" && registers[register] > 0
-      idx += value
-    else
-      idx += 1
-    end
+
+    idx += 1
   end
 
-  lastPlayed
+  last_played
 end
-
 
 puts(duet("set a 1
 add a 2
